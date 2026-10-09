@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Word Symbols</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--h:260;--bg:hsl(var(--h) 32% 10%);--panel:hsl(var(--h) 26% 16%);--ink:hsl(var(--h) 60% 95%);--muted:hsl(var(--h) 22% 70%);--tile:hsl(var(--h) 42% 44%);--pur:hsl(var(--h) 72% 62%);--gre:#22c55e;--yel:#eab308;--gry:#6b7280;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Outfit",system-ui,sans-serif;display:flex;justify-content:center}
+main{width:100%;max-width:480px;padding:24px 16px 40px;text-align:center}
+h1{margin:0 0 4px;font-size:28px}
+.sub{margin:0 0 16px;color:var(--muted);font-size:15px}
+.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;align-items:center}
+.abc{display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:14px}
+.abc .line{display:flex;gap:3px}
+.abc span{width:clamp(18px,5.4vw,28px);height:clamp(24px,7vw,32px);display:grid;place-items:center;font-size:14px;font-weight:600;border-radius:5px;border:1px solid var(--muted);color:var(--ink)}
+.abc span.used{background:var(--panel);border:2px solid var(--pur);font-weight:800}
+.slots{display:flex;gap:4px;justify-content:center;margin-bottom:14px}
+.tile{width:clamp(34px,10vw,44px);height:clamp(34px,10vw,44px);border-radius:7px;display:grid;place-items:center;font-size:20px;font-weight:700;background:var(--tile);color:#fff}
+.slots .tile{background:transparent;border:2px dashed var(--muted);color:var(--muted)}
+.slots.shown .tile{background:var(--pur);border:0;color:#fff;font-weight:800;outline:3px solid var(--ink);outline-offset:-3px}
+.notes{margin:0 auto 16px;max-width:360px}
+.notes p{margin:0 0 8px;font-size:13px;color:var(--muted)}
+.notes button{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:92px;background:var(--panel);border:2px solid var(--muted);color:var(--ink);padding:8px 10px}
+.notes button b{font-size:30px;line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+.notes button small{font-size:12px;color:var(--muted)}
+.notes button.n1{border-color:var(--gre)}.notes button.n2{border-color:var(--yel)}.notes button.n3{border-color:var(--gry)}
+.hist{background:var(--panel);border-radius:12px;padding:8px;margin-bottom:16px;min-height:20px}
+.g{display:flex;flex-direction:column;align-items:center;gap:3px;margin:10px 0}
+.symrow,.tilerow{display:flex;gap:4px}
+.symc,.g .tile{width:clamp(30px,9vw,40px)}
+.symc{height:clamp(30px,9vw,40px);display:grid;place-items:center;border-radius:7px;font-size:22px;line-height:1;background:transparent;border:1px solid var(--muted);font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+.symc.n1{background:var(--gre);border-color:var(--gre)}.symc.n2{background:var(--yel);border-color:var(--yel)}.symc.n3{background:var(--gry);border-color:var(--gry)}
+.g .tile{height:clamp(30px,9vw,40px);font-size:18px}
+input{font:inherit;font-size:20px;letter-spacing:4px;text-transform:uppercase;width:170px;padding:10px;border-radius:8px;border:2px solid var(--pur);background:transparent;color:var(--ink);text-align:center}
+button{font:inherit;font-weight:600;padding:10px 18px;border-radius:8px;border:0;background:var(--pur);color:#fff;cursor:pointer}
+button.ghost{background:transparent;color:var(--ink);border:2px solid var(--muted)}
+button:disabled{opacity:.4;cursor:not-allowed}
+button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+#msg{min-height:26px;font-weight:600;margin:12px 0}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<main>
+  <h1>Word Symbols</h1>
+  <p class="sub">Each symbol sits over a letter of the secret word, not your guess. Work out what the symbols mean to find the word.</p>
+  <div class="abc" id="abc" aria-label="Alphabet"></div>
+  <div class="slots" id="slots" aria-label="Secret word"></div>
+  <div class="notes" id="notes"></div>
+  <div class="row"><input id="g" autocomplete="off" autocapitalize="characters" aria-label="Your guess"><button id="go">Guess</button></div>
+  <div id="msg" role="status"></div>
+  <div class="row" style="margin-bottom:16px"><button class="ghost" id="new">New word</button><button class="ghost" id="give">Give up</button></div>
+  <div class="hist" id="hist"></div>
+</main>
+<script>
+const WORDS={3:"CAT DOG SUN MAP BOX FOX HAT PEN CUP BED KEY ICE EGG JAM OWL ZOO SKY TOY BAG BUS CAR COW CRY CUT DAY EAR EYE FAN FIG FLY GUM HEN HOT INK JAR JET KIT LAP LEG LID MAT MUD NET NUT OIL PAN PEA PIE PIG RAT RED RUG SAD SEA TEA TIE TOP VAN WEB YAK ZIP ACE ADD AGE AIR ANT APE ARM ART AXE BAT BEE BIB BOW BOY BUD CAB CAP CAN COT CUB DEN DIP DOT DRY DUG EEL ELK ELF FIN FIR FLU GAP GEM GYM HAM HIP HUT IVY JAW JOY KEG LAB LIP LOG MOP NAP OAK OAR OWE PAD PAW PEG PIN POT RAM RIB RIM SAW SOD SUB TAP TUB URN VAT WAX YAM ZAP".split(" "),4:"MOON STAR FISH BIRD CAKE LAMP ROAD KING JUMP QUIZ WAVE GOLD FROG BEAR BOAT BOOK CAMP CITY CORN DESK DOOR DUCK FARM FIRE FOOT GAME GIFT HAND HILL HOME IRON JAZZ KITE LAKE LEAF LION MILK NEST NOTE PARK RAIN RICE RING ROCK ROSE SAND SEED SHIP SILK SNOW SOUP SONG TREE WIND WOOL ZERO BELL BONE BOWL CLAY COAT DRUM FLAG GATE GLUE GRID HAWK HOLE JUNK KNOB LOCK MASK MINT OVEN PEAR PLUM POND RAFT SALT SOAP TENT TOWN VASE WALL YARD ARCH BACK BAKE BARN BASE BATH BEAN BEEF BIKE BLUE BOLD BUSH CAFE CAVE CHEF CHIP CLUB CODE COIN COOK DAWN DEER DISH DIVE DOLL DOVE DUST EAST FAIR FAST FERN FLOW FORK GAZE GIRL GOAT GOWN HARP HEAT HERO HIKE HORN IDEA INCH JADE JOKE KNOT LAMB LAWN LIME LOAF MAZE MEAL MOSS NAIL NECK OPEN PAGE PAIR PATH PINE PLAN POEM QUIT RACE REEF ROOF ROOT SAIL SHOE SINK SOCK SOIL STEM SWAN TAIL TALL TEAM TIDE TOAD TOOL TRAY TUNE TURN VINE WEST WING WISH WOLF YARN ZONE ZOOM".split(" "),5:"PLANT CRANE STONE BRAIN CLOUD FLAME GRAPE HOUSE LIGHT MONEY NIGHT OCEAN PAINT QUIET RIVER SMILE TABLE WATER YOUNG ANGEL BEACH CHAIR DREAM EARTH FIELD GLASS HEART JUICE KNIFE LEMON MUSIC NORTH PIANO QUEEN ROUND SUGAR TRAIN UNDER VOICE WORLD BREAD CANDY DANCE EAGLE FRUIT GHOST HONEY LUNCH MOUNT PEACH SHEEP TIGER WHEAT ZEBRA STORM BLEND CRISP DRIFT FROST GRAIN SPARK APPLE BADGE BENCH BLOOM BOARD BRUSH CABIN CLOCK CORAL CROWN DAISY DOZEN FENCE FLOOR FLUTE GIANT GRASS HOTEL IGLOO JELLY KOALA LLAMA LUCKY MANGO MAPLE MARCH NOVEL OLIVE ONION OTTER PANDA PEARL PILOT PIZZA PLAZA QUILT RADIO RANCH ROBOT SALAD SCARF SHELL SKATE SMOKE SNAKE SPOON STAMP STEAM SWEET TOAST TOWER UNCLE VIDEO WHALE YACHT ACORN ALARM ALBUM ALIEN AMBER ANKLE ARROW ATLAS AUDIO BACON BASIL BEARD BERRY BIRTH BLAZE BLOCK BONUS BOOST BRAVE BRICK BRIDE BUGLE CAMEL CANAL CARGO CHALK CHARM CHEST CHILD CIDER CLIMB COMET COUCH CRAFT CREAM CYCLE DELTA DINER DRAFT EMBER FABLE FERRY FLASH FLOUR FOCUS FORGE FROZE GLOBE GLOVE GRAND GUARD GUEST HABIT HAPPY HEDGE HOUND INDEX JEWEL JOKER KAYAK KNEEL LASER LATTE LEAFY LEVEL LIVER LUNAR MAGIC MARSH MEDAL MELON MOTOR NERVE NOBLE NURSE OASIS PAPER PASTA PEDAL POLAR PRIZE PULSE QUACK RAVEN REALM RIDGE RIVAL ROUTE SAUCE SCOUT SHARK SHIRT SLEEP SOLAR SPICE SPOKE STAGE STORY SUNNY SWING TANGO TEETH TENTH THUMB TULIP TUTOR VAPOR VINYL VIVID WAGON WATCH WHEEL WOMAN YOUTH".split(" "),6:"GARDEN SILVER BRIDGE CASTLE FLOWER FOREST ISLAND JUNGLE MARKET ORANGE PLANET RABBIT SUMMER WINTER YELLOW BASKET CANDLE DINNER FRIEND GUITAR HAMMER INSECT JACKET KITTEN MIRROR NEEDLE PENCIL POCKET SCHOOL SPIRIT TICKET VALLEY WINDOW BUTTER CIRCLE DOCTOR ENGINE FINGER GOLDEN LISTEN MOMENT ANIMAL BOTTLE BRANCH BUBBLE CAMERA CARPET CHERRY COOKIE DESERT DRAGON FABRIC FOLDER GINGER HELMET JERSEY KETTLE MEADOW MONKEY MUSEUM NUMBER OYSTER PEPPER PILLOW POTATO PURPLE RIBBON SAILOR SALMON SHADOW SPIDER SPRING SQUARE TEMPLE TOMATO TUNNEL TURTLE VIOLIN WALLET WIZARD ZIPPER ADVICE AUTUMN BADGER BAKERY BALLET BAMBOO BEETLE BOUNCE BREEZE BUCKET CACTUS CARROT CEREAL COFFEE COTTON CRAYON CUSTOM DANCER DECIDE DOMINO DONKEY DRAWER ELEVEN EMPIRE FAMILY FARMER FELLOW FIDDLE FLIGHT FOSSIL FROZEN GALAXY GENTLE HANDLE HEALTH HOCKEY HUNGRY INSIDE JIGSAW JUNIOR LAUNCH LEGEND LOCKET MAGNET MARBLE MASTER MIDDLE MOTHER NAPKIN NATURE NICKEL ORCHID PALACE PARROT PEBBLE PICNIC PUDDLE PUPPET RACKET RESCUE ROCKET SADDLE SAFARI SILENT SPONGE STREAM STRIPE SUNSET SWITCH TALENT TICKLE TOFFEE TRAVEL TUXEDO VELVET VOYAGE WAFFLE WONDER".split(" "),7:"BALANCE CAPTAIN DOLPHIN ELEMENT FREEDOM GARLAND HARVEST JOURNEY KITCHEN LANTERN MACHINE NETWORK OPINION PICTURE QUALITY RAINBOW SUNRISE TEACHER VILLAGE WEATHER ANCIENT BALLOON BICYCLE BLANKET CABBAGE CAMPING CHICKEN COMPASS CRYSTAL DIAMOND ECLIPSE FEATHER FOREVER GALLERY HOLIDAY JACKPOT KINGDOM LIBRARY MAGICAL MONSTER MUSTARD OCTOPUS PACKAGE PENGUIN QUARTER SCARLET SEASIDE STADIUM TRAFFIC UNICORN VOLCANO WARRIOR".split(" ")};
+const POOL=["❤️","🚗","🐱","🍰","🍓","🍩","⭐","☀️","💎","🌳","🍇","🌸","🦋"];
+const NOTE=["?","in guess, right spot","in guess, wrong spot","not in guess"];
+const $=id=>document.getElementById(id);
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+let secret,n,over,round=0,rows,symFor,notes,legend;
+function renderAbc(){
+  const used=new Set(rows.flatMap(r=>[...r.w]));
+  $("abc").innerHTML=["ABCDEFGHIJKLM","NOPQRSTUVWXYZ"].map(l=>`<div class="line">${[...l].map(c=>`<span class="${used.has(c)?"used":""}">${c}</span>`).join("")}</div>`).join("");
+}
+function renderNotes(){
+  $("notes").innerHTML=`<p>Tap a symbol to colour it with what you think it means. Colours are only your notes.</p><div class="row">${legend.map(s=>`<button data-s="${s}" class="n${notes[s]}"><b>${s}</b><small>${NOTE[notes[s]]}</small></button>`).join("")}</div>`;
+}
+function renderHist(){
+  $("hist").innerHTML=rows.map(r=>`<div class="g"><div class="symrow">${r.fb.map(k=>{const s=symFor[k];return `<div class="symc n${notes[s]}">${s}</div>`}).join("")}</div><div class="tilerow">${[...r.w].map(c=>`<div class="tile">${c}</div>`).join("")}</div></div>`).join("");
+}
+function drawSlots(){
+  $("slots").className="slots"+(over?" shown":"");
+  $("slots").innerHTML=[...secret].map(c=>`<div class="tile">${over?c:"?"}</div>`).join("");
+}
+function feedback(w){
+  // Symble rule: each symbol sits over a letter of the SECRET word, not your guess
+  return [...secret].map((a,i)=>w[i]===a?"g":(w.includes(a)?"y":"x"));
+}
+function start(){
+  round++;
+  n=3+Math.floor(Math.random()*5);
+  const list=WORDS[n];secret=list[Math.floor(Math.random()*list.length)];
+  const pick=shuffle(POOL).slice(0,3),kinds=shuffle(["g","y","x"]);
+  symFor={};kinds.forEach((k,i)=>symFor[k]=pick[i]);
+  legend=pick;notes={};pick.forEach(s=>notes[s]=0);
+  rows=[];over=false;
+  $("msg").textContent="";$("g").value="";$("g").maxLength=n;$("g").disabled=false;$("go").disabled=false;
+  drawSlots();renderAbc();renderNotes();renderHist();$("g").focus();
+}
+function guess(){
+  if(over)return;
+  const w=$("g").value.toUpperCase().trim();
+  if(!new RegExp(`^[A-Z]{${n}}$`).test(w)){$("msg").textContent=`Type exactly ${n} letters.`;return}
+  rows.unshift({w,fb:feedback(w)});
+  $("g").value="";renderHist();renderAbc();
+  if(w===secret){
+    over=true;$("g").disabled=true;$("go").disabled=true;
+    $("msg").textContent="";
+    drawSlots();confetti();
+  }else{$("msg").textContent=`Guess ${rows.length}`;$("g").focus()}
+}
+function giveUp(){
+  if(over)return;
+  over=true;$("g").disabled=true;$("go").disabled=true;
+  $("msg").textContent=`You gave up. The word was ${secret}.`;drawSlots();
+}
+$("notes").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  notes[b.dataset.s]=(notes[b.dataset.s]+1)%4;renderNotes();renderHist();
+});
+function confetti(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const c=document.createElement("canvas");c.id="confetti";c.width=innerWidth;c.height=innerHeight;document.body.append(c);
+  const x=c.getContext("2d"),cols=[0,45,150,200,260,320].map(h=>`hsl(${h} 85% 55%)`);
+  const ps=Array.from({length:150},()=>({x:innerWidth/2+(Math.random()-.5)*160,y:innerHeight*.35,vx:(Math.random()-.5)*15,vy:-Math.random()*13-4,s:6+Math.random()*6,r:Math.random()*6,vr:(Math.random()-.5)*.4,c:cols[Math.floor(Math.random()*cols.length)]}));
+  let t=0;
+  (function f(){
+    x.clearRect(0,0,c.width,c.height);t++;
+    ps.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.vx*=.99;p.r+=p.vr;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);x.restore()});
+    if(t<160)requestAnimationFrame(f);else c.remove();
+  })();
+}
+$("go").onclick=guess;
+$("g").onkeydown=e=>{if(e.key==="Enter")guess()};
+$("give").onclick=giveUp;
+$("new").onclick=start;
+start();
+</script>
+</body>
+</html>
